@@ -1,103 +1,165 @@
 /**
  * CSV Parser Module
- * Handles flexible delimiter detection and robust CSV parsing
+ * Robust CSV parsing and generation with auto-delimiter detection
+ * Supports quoted fields, escaped quotes, and UTF-8 BOM for Excel compatibility
  */
 
 /**
- * Detect CSV delimiter from first line
- * Prefers semicolon (;) over comma (,) for European CSV format
+ * Detects the delimiter used in CSV content
+ * Preference order: semicolon (;) > comma (,) > tab (\t) > pipe (|)
+ * @param content - CSV content string
+ * @param sampleLines - Number of lines to sample for detection (default: 5)
+ * @returns Detected delimiter character
  */
-export function detectSeparator(text: string): ';' | ',' {
-  const firstLine = text.split(/\r?\n/)[0];
-  if (!firstLine) return ';';
-  return firstLine.includes(';') ? ';' : ',';
-}
+export function detectSeparator(content: string, sampleLines: number = 5): string {
+  const lines = content.split('\n').slice(0, sampleLines);
+  const delimiters = [';', ',', '\t', '|'];
+  
+  let bestDelimiter = ',';
+  let bestScore = 0;
 
-/**
- * Parse CSV text with specified or auto-detected delimiter
- * Handles quoted fields and escape sequences
- * 
- * @param text - Raw CSV content
- * @param sep - Optional delimiter; auto-detected if omitted
- * @returns 2D array of cell strings
- * 
- * @example
- * const rows = parseCSV(csvText);
- * const headers = rows[0];
- * const data = rows.slice(1);
- */
-export function parseCSV(text: string, sep?: string): string[][] {
-  if (!sep) {
-    sep = detectSeparator(text);
-  }
+  for (const delimiter of delimiters) {
+    let score = 0;
+    let consistency = 0;
+    let previousFieldCount: number | null = null;
 
-  const lines = text
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .split('\n');
+    for (const line of lines) {
+      if (!line.trim()) continue;
 
-  const rows: string[][] = [];
-
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-
-    const cells: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      const next = line[i + 1];
-
-      if (char === '"') {
-        if (inQuotes && next === '"') {
-          // Escaped quote: "" → "
-          current += '"';
-          i++;
-        } else {
-          // Toggle quote state
-          inQuotes = !inQuotes;
+      const fieldCount = countFields(line, delimiter);
+      if (fieldCount > 1) {
+        score += fieldCount;
+        if (previousFieldCount === null) {
+          previousFieldCount = fieldCount;
+        } else if (previousFieldCount === fieldCount) {
+          consistency++;
         }
-      } else if (char === sep && !inQuotes) {
-        // Cell separator
-        cells.push(current.trim());
-        current = '';
-      } else {
-        current += char;
       }
     }
 
-    // Push final cell
-    cells.push(current.trim());
-    rows.push(cells);
+    const totalScore = score + consistency * 10;
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
+      bestDelimiter = delimiter;
+    }
   }
 
-  return rows;
+  return bestDelimiter;
 }
 
 /**
- * Parse CSV and return as array of objects with header keys
- * 
- * @param text - CSV content
- * @param sep - Optional delimiter
- * @returns Array of row objects: {header1: value1, header2: value2, ...}
+ * Counts the number of fields in a line respecting quoted sections
+ * @param line - CSV line
+ * @param delimiter - Field delimiter
+ * @returns Number of fields
+ */
+function countFields(line: string, delimiter: string): number {
+  let fieldCount = 1;
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        i++; // Skip escaped quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      fieldCount++;
+    }
+  }
+
+  return fieldCount;
+}
+
+/**
+ * Parses CSV content into a 2D array of strings
+ * @param content - CSV content string
+ * @param delimiter - Field delimiter (auto-detected if not provided)
+ * @returns 2D array of parsed fields
+ */
+export function parseCSV(content: string, delimiter?: string): string[][] {
+  const sep = delimiter || detectSeparator(content);
+  const lines = content.split('\n');
+  const result: string[][] = [];
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const fields = parseCSVLine(line, sep);
+    result.push(fields);
+  }
+
+  return result;
+}
+
+/**
+ * Parses a single CSV line respecting quoted fields and escaped quotes
+ * @param line - CSV line
+ * @param delimiter - Field delimiter
+ * @returns Array of parsed fields
+ */
+function parseCSVLine(line: string, delimiter: string): string[] {
+  const fields: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        currentField += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      // Field delimiter found outside quotes
+      fields.push(currentField.trim());
+      currentField = '';
+    } else {
+      currentField += char;
+    }
+  }
+
+  // Add last field
+  fields.push(currentField.trim());
+
+  return fields;
+}
+
+/**
+ * Parses CSV content into an array of objects
+ * First row is treated as headers
+ * @param content - CSV content string
+ * @param delimiter - Field delimiter (auto-detected if not provided)
+ * @returns Array of objects with header keys
  */
 export function parseCSVAsObjects(
-  text: string,
-  sep?: string
+  content: string,
+  delimiter?: string
 ): Record<string, string>[] {
-  const rows = parseCSV(text, sep);
-  if (rows.length < 2) return [];
+  const rows = parseCSV(content, delimiter);
+
+  if (rows.length === 0) {
+    return [];
+  }
 
   const headers = rows[0];
   const result: Record<string, string>[] = [];
 
   for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
     const obj: Record<string, string> = {};
-    const cells = rows[i];
 
     for (let j = 0; j < headers.length; j++) {
-      obj[headers[j]] = cells[j] ?? '';
+      obj[headers[j]] = row[j] || '';
     }
 
     result.push(obj);
@@ -107,52 +169,58 @@ export function parseCSVAsObjects(
 }
 
 /**
- * Escape CSV cell for safe output
- * Quotes cells containing semicolon, quote, or newline
- * 
- * @param val - Cell value
- * @returns Escaped string safe for CSV output
+ * Escapes a CSV field value for safe CSV output
+ * Handles quotes and special characters
+ * @param value - Field value to escape
+ * @returns Escaped field value
  */
-export function csvEscape(val: any): string {
-  if (val === null || val === undefined) return '';
-
-  const s = String(val);
-  if (s.includes(';') || s.includes('"') || s.includes('\n')) {
-    return '"' + s.replace(/"/g, '""') + '"';
+export function csvEscape(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '';
   }
 
-  return s;
+  const str = String(value);
+
+  // Check if field needs quoting
+  if (str.includes('"') || str.includes(',') || str.includes(';') || str.includes('\n') || str.includes('\r')) {
+    // Escape quotes by doubling them
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+
+  return str;
 }
 
 /**
- * Generate CSV line from values
- * Properly escapes cells and joins with delimiter
- * 
- * @param values - Array of cell values
- * @param sep - Delimiter (default: ";")
+ * Generates a CSV line from an array of values
+ * @param values - Array of field values
+ * @param delimiter - Field delimiter (default: ',')
  * @returns CSV line string
  */
 export function generateCSVLine(
-  values: any[],
-  sep: string = ';'
+  values: (string | number | boolean | null | undefined)[],
+  delimiter: string = ','
 ): string {
-  return values.map(csvEscape).join(sep);
+  return values.map(csvEscape).join(delimiter);
 }
 
 /**
- * Generate complete CSV from 2D array
- * Includes UTF-8 BOM for Excel compatibility
- * 
- * @param rows - Array of rows (first row = headers)
- * @param includeBOM - Add UTF-8 BOM prefix (default: true)
- * @returns Complete CSV text
+ * Generates complete CSV content from 2D array with optional UTF-8 BOM
+ * @param rows - 2D array of values
+ * @param delimiter - Field delimiter (default: ',')
+ * @param includeUTF8BOM - Add UTF-8 BOM for Excel compatibility (default: true)
+ * @returns CSV content string
  */
 export function generateCSV(
-  rows: string[][],
-  includeBOM: boolean = true
+  rows: (string | number | boolean | null | undefined)[][],
+  delimiter: string = ',',
+  includeUTF8BOM: boolean = true
 ): string {
-  const lines = rows.map(row => generateCSVLine(row));
-  const csv = lines.join('\r\n');
+  const lines = rows.map((row) => generateCSVLine(row, delimiter));
+  const csv = lines.join('\n');
 
-  return includeBOM ? '\ufeff' + csv : csv;
+  if (includeUTF8BOM) {
+    return '\uFEFF' + csv;
+  }
+
+  return csv;
 }
