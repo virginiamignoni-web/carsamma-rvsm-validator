@@ -112,6 +112,19 @@ export function processTape(csvText: string): TapeProcessingResult {
   };
 }
 
+// ============================================================================
+// Temporary Operational Test Example
+// ============================================================================
+
+const sampleCsv = `ERROS;DATA;CHAMADA;TIPO;ORIGEM;DESTINO;FIXO ENT;HORA ENT;NIVEL ENT;AEROVIA;FIXO SAI;HORA SAI;NIVEL SAI;INDICATIVO;RVSM
+;;B737;GIG;SDU;SUVAA;0815;FL350;UZ1;MAMBO;0900;FL380;TAP;Y
+;;;A320;MAO;CGH;SOBRA;0730;FL320;UZ5;BRAVA;0845;FL350;;N
+;;GOL;B738;VCP;GIG;SANTO;1000;900;UZ2;NORTE;1100;FL400;GOL;Y`;
+
+console.log('\n--- CARSAMMA RVSM Validator - Test Example ---\n');
+const result = processTape(sampleCsv);
+console.log(result);
+
 export default {
   processTape,
 };
