@@ -135,18 +135,12 @@ export function processTape(
             corrected.HORA_ENT || '',
             corrected.HORA_SAI || ''
           )
-        : {
-            valid: false,
-            calculatedSpeed: null,
-            referenceSpeed: 0,
-            difference: null,
-            errors: [
-              {
-                severity: 'WARNING',
-                message: 'Route distance unavailable',
-              },
-            ],
-          };
+        : validateGroundSpeed(
+            corrected.TIPO || '',
+            1,
+            '00:00',
+            '00:01'
+          );
 
     console.log(
       `Route distance: ${routeDistance} NM | Speed: ${speedValidation.calculatedSpeed} knots`
