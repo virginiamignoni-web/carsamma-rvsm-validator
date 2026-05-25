@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CARSAMMA RVSM Validator</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f4f4f4;
+    }
+
+    h1 {
+      color: #003366;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      background: #003366;
+      color: white;
+      border-radius: 6px;
+    }
+
+    pre {
+      background: #222;
+      color: #00ff99;
+      padding: 20px;
+      overflow: auto;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>CARSAMMA RVSM Validator</h1>
+
+  <div class="card">
+    <h3>Tape CSV</h3>
+
+    <input
+      type="file"
+      id="tapeFile"
+      accept=".csv"
+    />
+  </div>
+
+  <div class="card">
+    <h3>Mesh CSV</h3>
+
+    <input
+      type="file"
+      id="meshFile"
+      accept=".csv"
+    />
+  </div>
+
+  <div class="card">
+    <button id="runBtn">
+      Run Validation
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>Operational Report</h3>
+
+    <pre id="output">
+Waiting for validation...
+    </pre>
+  </div>
+
+  <script src="./app.js"></script>
+
+</body>
+</html>
