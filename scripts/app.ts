@@ -19,7 +19,7 @@ console.log('CARSAMMA RVSM Validator initialized');
 export interface ProcessedRecord {
   original: Record<string, string>;
   corrected: Record<string, string>;
- validations: {
+  validations: {
   mandatory: ReturnType<typeof validateMandatoryFields>;
   nivelEnt: ReturnType<typeof validateFlightLevel>;
   nivelSai: ReturnType<typeof validateFlightLevel>;
@@ -67,11 +67,11 @@ export function processTape(csvText: string): TapeProcessingResult {
     const corrected = { ...mandatory.corrected };
 
     // Normalize times
-    const horaPent = normalizeTime(corrected.HORA_ENT || '');
+    const horaEnt = normalizeTime(corrected.HORA_ENT || '');
     const horasai = normalizeTime(corrected.HORA_SAI || '');
 
-    if (horaPent) {
-      corrected.HORA_ENT = horaPent;
+    if (horaEnt) {
+      corrected.HORA_ENT = horaEnt;
     }
     if (horasai) {
       corrected.HORA_SAI = horasai;
@@ -103,8 +103,8 @@ console.log(
         mandatory,
         nivelEnt,
         nivelSai,
-  speed: speedValidation,  
-    },
+        speed: speedValidation,
+      },
     };
 
     records.push(processedRecord);
