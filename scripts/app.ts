@@ -2,7 +2,7 @@
  * CARSAMMA RVSM Validator
  * Main application entry point with integrated validation pipeline
  */
-
+import { parseTape } from './parsers';
 import { parseMesh } from './parsers/mesh-parser';
 import { calculateRouteDistance } from './routing/distance-calculator';
 import {
@@ -74,12 +74,12 @@ const mesh = meshCsvText
 
     // Normalize times
     const horaEnt = normalizeTime(corrected.HORA_ENT || '');
-    const horasai = normalizeTime(corrected.HORA_SAI || '');
+    const horaSai = normalizeTime(corrected.HORA_SAI || '');
 
     if (horaEnt) {
       corrected.HORA_ENT = horaEnt;
     }
-    if (horasai) {
+    if (horaSai) {
       corrected.HORA_SAI = horasai;
     }
 
@@ -88,10 +88,10 @@ const mesh = meshCsvText
     const nivelSai = validateFlightLevel(corrected.NIVEL_SAI || '');
     
     // Temporary mock distance
-    const moconst route = [
+ const route = [
   corrected.FIXO_ENT,
   corrected.FIXO_SAI,
-].filter(Boolean);ckDistanceNm = 120;
+].filter(Boolean);
     const routeDistance =
   mesh && corrected.AEROVIA
     ? calculateRouteDistance(
@@ -169,9 +169,16 @@ const sampleCsv = `ERROS;DATA;CHAMADA;TIPO;ORIGEM;DESTINO;FIXO ENT;HORA ENT;NIVE
 ;;B737;GIG;SDU;SUVAA;0815;FL350;UZ1;MAMBO;0900;FL380;TAP;Y
 ;;;A320;MAO;CGH;SOBRA;0730;FL320;UZ5;BRAVA;0845;FL350;;N
 ;;GOL;B738;VCP;GIG;SANTO;1000;900;UZ2;NORTE;1100;FL400;GOL;Y`;
+const sampleMeshCsv = `A;B;AWY;DIST
+SUVAA;MAMBO;UZ1;120
+SOBRA;BRAVA;UZ5;140
+SANTO;NORTE;UZ2;160`;
 
 console.log('\n--- CARSAMMA RVSM Validator - Test Example ---\n');
-const result = processTape(sampleCsv);
+const result = processTape(
+  sampleCsv,
+  sampleMeshCsv
+);
 console.log(result);
 
 export default {
