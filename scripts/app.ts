@@ -127,20 +127,20 @@ export function processTape(
         : null;
 
     // Validate operational speed
-    const speedValidation =
-      routeDistance !== null
-        ? validateGroundSpeed(
-            corrected.TIPO || '',
-            routeDistance,
-            corrected.HORA_ENT || '',
-            corrected.HORA_SAI || ''
-          )
-        : validateGroundSpeed(
-            corrected.TIPO || '',
-            1,
-            '00:00',
-            '00:01'
-          );
+  const speedValidation =
+  routeDistance !== null
+    ? validateGroundSpeed(
+        corrected.TIPO || '',
+        routeDistance,
+        corrected.HORA_ENT || '',
+        corrected.HORA_SAI || ''
+      )
+    : validateGroundSpeed(
+        corrected.TIPO || '',
+        1,
+        '00:00',
+        '00:01'
+      );
 
     console.log(
       `Route distance: ${routeDistance} NM | Speed: ${speedValidation.calculatedSpeed} knots`
