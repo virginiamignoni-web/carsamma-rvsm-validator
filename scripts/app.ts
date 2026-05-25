@@ -3,7 +3,8 @@
  * Main application entry point with integrated validation pipeline
  */
 
-import { parseTape } from './parsers';
+import { parseMesh } from './parsers/mesh-parser';
+import { calculateRouteDistance } from './routing/distance-calculator';
 import {
   validateMandatoryFields,
   validateFlightLevel,
@@ -51,10 +52,15 @@ export interface TapeProcessingResult {
  * @param csvText - Raw CSV tape content
  * @returns Processing result with validation details
  */
-export function processTape(csvText: string): TapeProcessingResult {
+export function processTape(
+  csvText: string,
+  meshCsvText?: string
+): TapeProcessingResult {
   // Step 1: Parse tape
   const tape = parseTape(csvText);
-
+const mesh = meshCsvText
+  ? parseMesh(meshCsvText)
+  : null;
   const records: ProcessedRecord[] = [];
   let validCount = 0;
 
@@ -82,18 +88,43 @@ export function processTape(csvText: string): TapeProcessingResult {
     const nivelSai = validateFlightLevel(corrected.NIVEL_SAI || '');
     
     // Temporary mock distance
-    const mockDistanceNm = 120;
+    const moconst route = [
+  corrected.FIXO_ENT,
+  corrected.FIXO_SAI,
+].filter(Boolean);ckDistanceNm = 120;
+    const routeDistance =
+  mesh && corrected.AEROVIA
+    ? calculateRouteDistance(
+        mesh,
+        route,
+        corrected.AEROVIA
+      )
+    : null;
     
     // Validate operational speed
-    const speedValidation = validateGroundSpeed(
-      corrected.TIPO || '',
-      mockDistanceNm,
-      corrected.HORA_ENT || '',
-      corrected.HORA_SAI || ''
-    );
+   const speedValidation =
+  routeDistance !== null
+    ? validateGroundSpeed(
+        corrected.TIPO || '',
+        routeDistance,
+        corrected.HORA_ENT || '',
+        corrected.HORA_SAI || ''
+      )
+    : {
+        valid: false,
+        calculatedSpeed: null,
+        referenceSpeed: 0,
+        difference: null,
+        errors: [
+          {
+            severity: 'WARNING',
+            message: 'Route distance unavailable',
+          },
+        ],
+      };
 
 console.log(
-  `Speed validation: ${speedValidation.calculatedSpeed} knots`
+  `Route distance: ${routeDistance} NM | Speed: ${speedValidation.calculatedSpeed} knots`
 );
     // Build processed record
     const processedRecord: ProcessedRecord = {
