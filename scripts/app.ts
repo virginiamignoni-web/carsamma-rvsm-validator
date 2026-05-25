@@ -6,6 +6,7 @@
 import { parseTape } from './parsers';
 import { parseMesh } from './parsers/mesh-parser';
 import { calculateRouteDistance } from './routing/distance-calculator';
+import { estimateRVSMExposure } from './rvsm/exposure-estimator';
 
 import {
   validateMandatoryFields,
@@ -30,6 +31,7 @@ export interface ProcessedRecord {
     nivelSai: ReturnType<typeof validateFlightLevel>;
     speed?: ReturnType<typeof validateGroundSpeed>;
     occupancy?: ReturnType<typeof inferRVSMOccupancy>;
+    exposure?: ReturnType<typeof estimateRVSMExposure>;
   };
 }
 
@@ -117,6 +119,15 @@ const occupancy = inferRVSMOccupancy(
   nivelEnt.numericLevel || 0,
   nivelSai.numericLevel || 0
 );
+
+    // Estimate RVSM exposure time
+const exposure = estimateRVSMExposure(
+  corrected.HORA_ENT || '',
+  corrected.HORA_SAI || '',
+  occupancy.entersRVSM,
+  occupancy.exitsRVSM,
+  occupancy.crossingRVSM
+);
     
     // Build operational route
     const route = [
@@ -157,18 +168,23 @@ console.log(
 console.log(
   `RVSM Occupancy: ${occupancy.occupiesRVSM} | Crossing: ${occupancy.crossingRVSM}`
 );
-
+    
+console.log(
+  `Estimated RVSM Exposure: ${exposure.estimatedMinutes} minutes`
+);
+    
     // Build processed record
     const processedRecord: ProcessedRecord = {
       original: row,
       corrected,
-      validations: {
-        mandatory,
-        nivelEnt,
-        nivelSai,
-        speed: speedValidation,
-        occupancy,
-      },
+     validations: {
+    mandatory,
+    nivelEnt,
+    nivelSai,
+    speed: speedValidation,
+    occupancy,
+    exposure,
+    },
     };
 
     records.push(processedRecord);
