@@ -57,7 +57,7 @@ export function processTape(csvText: string): TapeProcessingResult {
   let validCount = 0;
 
   // Step 2: Process each row
-  for (const row of tape.records) {
+  for (const row of tape.data) {
     // Validate mandatory fields
     const mandatory = validateMandatoryFields(row);
 
@@ -105,9 +105,9 @@ export function processTape(csvText: string): TapeProcessingResult {
 
   // Step 3: Return results
   return {
-    total: tape.records.length,
+    total: tape.data.length,
     valid: validCount,
-    invalid: tape.records.length - validCount,
+    invalid: tape.data.length - validCount,
     records,
   };
 }
@@ -128,3 +128,4 @@ console.log(result);
 export default {
   processTape,
 };
+fix: align app.ts with tape parser contract
