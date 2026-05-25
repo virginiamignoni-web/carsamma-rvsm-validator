@@ -7,6 +7,7 @@ import { parseTape } from './parsers';
 import { parseMesh } from './parsers/mesh-parser';
 import { calculateRouteDistance } from './routing/distance-calculator';
 import { estimateRVSMExposure } from './rvsm/exposure-estimator';
+import { buildValidationReport } from './core/report-builder';
 
 import {
   validateMandatoryFields,
@@ -232,6 +233,14 @@ const result = processTape(
   sampleCsv,
   sampleMeshCsv
 );
+
+const report = buildValidationReport(
+  result
+);
+
+console.log('\n--- Operational Report ---\n');
+
+console.log(report);
 
 export default {
   processTape,
