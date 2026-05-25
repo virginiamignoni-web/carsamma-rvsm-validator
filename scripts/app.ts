@@ -8,7 +8,7 @@ import {
   validateMandatoryFields,
   validateFlightLevel,
  } from './validators';
-
+import { validateGroundSpeed } from './validators/speed-validator';
 import { normalizeTime } from './utils/time-utils';
 
 console.log('CARSAMMA RVSM Validator initialized');
@@ -19,11 +19,12 @@ console.log('CARSAMMA RVSM Validator initialized');
 export interface ProcessedRecord {
   original: Record<string, string>;
   corrected: Record<string, string>;
-  validations: {
-    mandatory: ReturnType<typeof validateMandatoryFields>;
-    nivelEnt: ReturnType<typeof validateFlightLevel>;
-    nivelSai: ReturnType<typeof validateFlightLevel>;
-  };
+ validations: {
+  mandatory: ReturnType<typeof validateMandatoryFields>;
+  nivelEnt: ReturnType<typeof validateFlightLevel>;
+  nivelSai: ReturnType<typeof validateFlightLevel>;
+  speed?: ReturnType<typeof validateGroundSpeed>;
+};
 }
 
 /**
@@ -79,7 +80,21 @@ export function processTape(csvText: string): TapeProcessingResult {
     // Validate flight levels
     const nivelEnt = validateFlightLevel(corrected.NIVEL_ENT || '');
     const nivelSai = validateFlightLevel(corrected.NIVEL_SAI || '');
+    
+    // Temporary mock distance
+    const mockDistanceNm = 120;
+    
+    // Validate operational speed
+    const speedValidation = validateGroundSpeed(
+      corrected.TIPO || '',
+      mockDistanceNm,
+      corrected.HORA_ENT || '',
+      corrected.HORA_SAI || ''
+    );
 
+console.log(
+  `Speed validation: ${speedValidation.calculatedSpeed} knots`
+);
     // Build processed record
     const processedRecord: ProcessedRecord = {
       original: row,
@@ -88,7 +103,8 @@ export function processTape(csvText: string): TapeProcessingResult {
         mandatory,
         nivelEnt,
         nivelSai,
-      },
+  speed: speedValidation,  
+    },
     };
 
     records.push(processedRecord);
@@ -97,8 +113,9 @@ export function processTape(csvText: string): TapeProcessingResult {
     const hasCriticalErrors =
       !mandatory.valid ||
       !nivelEnt.valid ||
-      !nivelSai.valid;
-
+      !nivelSai.valid ||
+      !speedValidation.valid;
+    
     if (!hasCriticalErrors) {
       validCount++;
     }
