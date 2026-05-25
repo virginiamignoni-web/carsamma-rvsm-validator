@@ -9,6 +9,7 @@ import { calculateRouteDistance } from './routing/distance-calculator';
 import { estimateRVSMExposure } from './rvsm/exposure-estimator';
 import { buildValidationReport } from './core/report-builder';
 import { validateOperationalAnomalies } from './validators/anomaly-validator';
+import { exportResultsCSV } from './core/export-results';
 
 import {
   validateMandatoryFields,
@@ -258,6 +259,15 @@ const report = buildValidationReport(
 console.log('\n--- Operational Report ---\n');
 
 console.log(report);
+
+const exportedCsv =
+  exportResultsCSV(result);
+
+console.log(
+  '\n--- Exported CSV ---\n'
+);
+
+console.log(exportedCsv);
 
 export default {
   processTape,
