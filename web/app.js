@@ -1,6 +1,9 @@
 const tapeInput =
   document.getElementById('tapeFile');
 
+const aircraftInput =
+  document.getElementById('aircraftFile');
+
 const meshInput =
   document.getElementById('meshFile');
 
@@ -45,20 +48,31 @@ runBtn.addEventListener(
       const tapeFile =
         tapeInput.files[0];
 
+      const aircraftFile =
+        aircraftInput.files[0];
+
       const meshFile =
         meshInput.files[0];
 
       if (!tapeFile) {
+
         output.textContent =
           'Please upload Tape CSV';
 
         return;
       }
 
-      // Read files
+      // Read tape CSV
       const tapeCsv =
         await readFile(tapeFile);
 
+      // Read aircraft CSV
+      const aircraftCsv =
+        aircraftFile
+          ? await readFile(aircraftFile)
+          : '';
+
+      // Read mesh CSV
       const meshCsv =
         meshFile
           ? await readFile(meshFile)
@@ -67,13 +81,18 @@ runBtn.addEventListener(
       output.textContent =
         'Processing operational validation...';
 
-      // TEMPORARY MOCK RESULT
-      // Later this will connect
-      // to processTape()
+      console.log(tapeCsv);
+      console.log(aircraftCsv);
+      console.log(meshCsv);
+
+      // TEMPORARY MOCK REPORT
+      // Later this connects to processTape()
 
       const mockReport = {
         totalFlights: 3,
+
         validFlights: 2,
+
         invalidFlights: 1,
 
         rvsmOccupancyCount: 2,
@@ -85,7 +104,8 @@ runBtn.addEventListener(
         speedWarnings: 1,
       };
 
-exportedCsv =
+      // TEMPORARY MOCK CSV EXPORT
+      exportedCsv =
 `CHAMADA;TIPO;VALID
 TAP;B737;YES
 GOL;B738;NO`;
@@ -107,6 +127,7 @@ GOL;B738;NO`;
     }
   }
 );
+
 /**
  * Download exported CSV
  */
