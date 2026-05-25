@@ -14,6 +14,7 @@ import {
 
 import { validateGroundSpeed } from './validators/speed-validator';
 import { normalizeTime } from './utils/time-utils';
+import { inferRVSMOccupancy } from './rvsm/occupancy-inference';
 
 console.log('CARSAMMA RVSM Validator initialized');
 
@@ -27,6 +28,7 @@ export interface ProcessedRecord {
     mandatory: ReturnType<typeof validateMandatoryFields>;
     nivelEnt: ReturnType<typeof validateFlightLevel>;
     nivelSai: ReturnType<typeof validateFlightLevel>;
+    speed?: ReturnType<typeof validateGroundSpeed>;
     speed?: ReturnType<typeof validateGroundSpeed>;
   };
 }
@@ -109,7 +111,13 @@ export function processTape(
     const nivelSai = validateFlightLevel(
       corrected.NIVEL_SAI || ''
     );
-
+    
+// Infer RVSM occupancy
+const occupancy = inferRVSMOccupancy(
+  nivelEnt.numericLevel || 0,
+  nivelSai.numericLevel || 0
+);
+    
     // Build operational route
     const route = [
       corrected.FIXO_ENT,
@@ -155,6 +163,7 @@ export function processTape(
         nivelEnt,
         nivelSai,
         speed: speedValidation,
+        occupancy,
       },
     };
 
@@ -197,6 +206,9 @@ SANTO;NORTE;UZ2;160`;
 
 console.log(
   '\n--- CARSAMMA RVSM Validator - Test Example ---\n'
+);
+console.log(
+  `RVSM Occupancy: ${occupancy.occupiesRVSM} | Crossing: ${occupancy.crossingRVSM}`
 );
 
 const result = processTape(
