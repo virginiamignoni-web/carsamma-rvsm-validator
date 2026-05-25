@@ -7,8 +7,9 @@ import { parseTape } from './parsers';
 import {
   validateMandatoryFields,
   validateFlightLevel,
-  normalizeTime,
-} from './validators';
+ } from './validators';
+
+import { normalizeTime } from './utils/time-utils';
 
 console.log('CARSAMMA RVSM Validator initialized');
 
@@ -128,4 +129,3 @@ console.log(result);
 export default {
   processTape,
 };
-fix: align app.ts with tape parser contract
