@@ -7,8 +7,13 @@ const meshInput =
 const runBtn =
   document.getElementById('runBtn');
 
+const downloadBtn =
+  document.getElementById('downloadBtn');
+
 const output =
   document.getElementById('output');
+
+let exportedCsv = '';
 
 /**
  * Read uploaded file as text
@@ -80,6 +85,11 @@ runBtn.addEventListener(
         speedWarnings: 1,
       };
 
+exportedCsv =
+`CHAMADA;TIPO;VALID
+TAP;B737;YES
+GOL;B738;NO`;
+
       output.textContent =
         JSON.stringify(
           mockReport,
@@ -95,5 +105,43 @@ runBtn.addEventListener(
         'Validation error: ' +
         err.message;
     }
+  }
+);
+/**
+ * Download exported CSV
+ */
+downloadBtn.addEventListener(
+  'click',
+  () => {
+
+    if (!exportedCsv) {
+
+      output.textContent =
+        'No CSV available for download';
+
+      return;
+    }
+
+    const blob = new Blob(
+      [exportedCsv],
+      {
+        type: 'text/csv',
+      }
+    );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const a =
+      document.createElement('a');
+
+    a.href = url;
+
+    a.download =
+      'rvsm-validation-results.csv';
+
+    a.click();
+
+    URL.revokeObjectURL(url);
   }
 );
