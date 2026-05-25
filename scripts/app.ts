@@ -29,7 +29,7 @@ export interface ProcessedRecord {
     nivelEnt: ReturnType<typeof validateFlightLevel>;
     nivelSai: ReturnType<typeof validateFlightLevel>;
     speed?: ReturnType<typeof validateGroundSpeed>;
-    speed?: ReturnType<typeof validateGroundSpeed>;
+    occupancy?: ReturnType<typeof inferRVSMOccupancy>;
   };
 }
 
@@ -134,8 +134,8 @@ const occupancy = inferRVSMOccupancy(
           )
         : null;
 
-    // Validate operational speed
-  const speedValidation =
+   // Validate operational speed
+const speedValidation =
   routeDistance !== null
     ? validateGroundSpeed(
         corrected.TIPO || '',
@@ -150,9 +150,13 @@ const occupancy = inferRVSMOccupancy(
         '00:01'
       );
 
-    console.log(
-      `Route distance: ${routeDistance} NM | Speed: ${speedValidation.calculatedSpeed} knots`
-    );
+console.log(
+  `Route distance: ${routeDistance} NM | Speed: ${speedValidation.calculatedSpeed} knots`
+);
+
+console.log(
+  `RVSM Occupancy: ${occupancy.occupiesRVSM} | Crossing: ${occupancy.crossingRVSM}`
+);
 
     // Build processed record
     const processedRecord: ProcessedRecord = {
@@ -207,16 +211,11 @@ SANTO;NORTE;UZ2;160`;
 console.log(
   '\n--- CARSAMMA RVSM Validator - Test Example ---\n'
 );
-console.log(
-  `RVSM Occupancy: ${occupancy.occupiesRVSM} | Crossing: ${occupancy.crossingRVSM}`
-);
 
 const result = processTape(
   sampleCsv,
   sampleMeshCsv
 );
-
-console.log(result);
 
 export default {
   processTape,
