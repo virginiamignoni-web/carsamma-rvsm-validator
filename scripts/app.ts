@@ -8,6 +8,7 @@ import { parseMesh } from './parsers/mesh-parser';
 import { calculateRouteDistance } from './routing/distance-calculator';
 import { estimateRVSMExposure } from './rvsm/exposure-estimator';
 import { buildValidationReport } from './core/report-builder';
+import { validateOperationalAnomalies } from './validators/anomaly-validator';
 
 import {
   validateMandatoryFields,
@@ -33,6 +34,7 @@ export interface ProcessedRecord {
     speed?: ReturnType<typeof validateGroundSpeed>;
     occupancy?: ReturnType<typeof inferRVSMOccupancy>;
     exposure?: ReturnType<typeof estimateRVSMExposure>;
+    anomalies?: ReturnType<typeof validateOperationalAnomalies>;
   };
 }
 
@@ -173,19 +175,34 @@ console.log(
 console.log(
   `Estimated RVSM Exposure: ${exposure.estimatedMinutes} minutes`
 );
+    // Detect operational anomalies
+const anomalies =
+  validateOperationalAnomalies(
+    nivelEnt.numericLevel || 0,
+    nivelSai.numericLevel || 0,
+    exposure.estimatedMinutes,
+    speedValidation.calculatedSpeed
+  );
+
+    if (anomalies.hasAnomaly) {
+  console.log(
+    `Operational anomalies: ${anomalies.anomalies.join(', ')}`
+  );
+}
     
     // Build processed record
     const processedRecord: ProcessedRecord = {
       original: row,
       corrected,
-     validations: {
-    mandatory,
-    nivelEnt,
-    nivelSai,
-    speed: speedValidation,
-    occupancy,
-    exposure,
-    },
+    validations: {
+  mandatory,
+  nivelEnt,
+  nivelSai,
+  speed: speedValidation,
+  occupancy,
+  exposure,
+  anomalies,
+},
     };
 
     records.push(processedRecord);
